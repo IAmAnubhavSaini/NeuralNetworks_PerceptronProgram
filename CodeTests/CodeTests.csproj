@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="TestUIElements.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestPerceptronClass.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PerceptronProgram\PerceptronProgram.csproj">
