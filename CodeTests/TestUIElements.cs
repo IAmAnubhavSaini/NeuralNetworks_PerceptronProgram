@@ -8,19 +8,19 @@ namespace CodeTests
     public class TestUIElements
     {
         static char givenCharacter = '-';
-        static int giveCharacterCount = 26;
-        static string separator = UIElements.Separator(givenCharacter, giveCharacterCount);
+        static int givenCharacterCount = 26;
+        static string separator = UIElements.Separator(givenCharacter, givenCharacterCount);
         
         [TestMethod]
         public void TestSeparatorForLength()
         {
-            Assert.AreEqual(separator.Length, 1 + giveCharacterCount + 1);
+            Assert.AreEqual(1 + givenCharacterCount + 1, separator.Length);
         }
 
         [TestMethod]
         public void TestThatSeparatorContainsNewLines()
         {
-            Assert.AreEqual(separator.Contains("\n"), true);
+            Assert.AreEqual(true, separator.Contains("\n"));
         }
 
         [TestMethod]
@@ -32,20 +32,19 @@ namespace CodeTests
                 if (separator[i] == '\n')
                     countNewLines++;
             }
-            Assert.AreEqual(countNewLines, 2);
+            Assert.AreEqual(2, countNewLines);
         }
 
         [TestMethod]
         public void TestThatSeparatorContainsGivenCharacterGivenCountTimes()
         {
-            int countGivenCharacter = 0;
+            int expectedCount = 0;
             for (int i = 0; i < separator.Length; i++)
             {
                 if (separator[i] == givenCharacter)
-                    countGivenCharacter++;
+                    expectedCount++;
             }
-            Assert.AreEqual(countGivenCharacter, giveCharacterCount);
-            
+            Assert.AreEqual(givenCharacterCount, expectedCount);
         }
     }
 }
