@@ -42,9 +42,77 @@ namespace Perceptrons
             return result;
         }
 
-        public double[] Train(double[][] trainingData, double alpha, int maxEpochs) { throw new NotImplementedException(); }
-        void Shuffle(int[] sequence) { throw new NotImplementedException(); }
-        void Update(int computed, int desired, double alpha) { throw new NotImplementedException(); }
+        public double[] Train(double[][] trainingData, double alpha, int maxEpochs)
+        {
+            if (trainingData == null)
+            {
+                throw new ArgumentNullException("trainingData", "Training data cannot be null.");
+            }
+            double[] xValues = new double[NumInput];
+            int desired = 0;
+            int[] sequence = new int[trainingData.Length];
+            for(int i = 0; i < sequence.Length; i++)
+            {
+                sequence[i] = i;
+            }
+            for (int epoch = 0; epoch < maxEpochs; epoch++ )
+            {
+                Shuffle(sequence);
+                for (int i = 0; i < trainingData.Length; i++)
+                {
+                    int idx = sequence[i];
+                    Array.Copy(trainingData[idx], xValues, NumInput);
+                    desired = int.Parse(trainingData[idx][NumInput].ToString());
+                    int computed = ComputeOutput(xValues);
+                    Update(computed, desired, alpha);
+                }
+            }
+            double[] result = new double[NumInput + 1];
+            Array.Copy(Weights, result, NumInput);
+            result[result.Length - 1] = Bias;
+            return result;
+        }
+        void Shuffle(int[] sequence)
+        {
+            for (int i = 0; i < sequence.Length; i++)
+            {
+                int r = rnd.Next(i, sequence.Length);
+                int tmp = sequence[r];
+                sequence[r] = sequence[i];
+                sequence[i] = tmp;
+            }
+        }
+        void Update(int computed, int desired, double alpha) {
+            if (computed == desired) return;
+            int delta = computed - desired;
+            for (int i = 0; i < Weights.Length; i++)
+            {
+                if (computed > desired && Inputs[i] >= 0.0)
+                {
+                    Weights[i] = Weights[i] - (alpha * delta * Inputs[i]);
+                }
+                else if (computed > desired && Inputs[i] >= 0.0)
+                {
+                    Weights[i] = Weights[i] + (alpha * delta * Inputs[i]);
+                }
+                else if (computed < desired && Inputs[i] >= 0.0)
+                {
+                    Weights[i] = Weights[i] - (alpha * delta * Inputs[i]);
+                }
+                else if (computed < desired && Inputs[i] < 0.0)
+                {
+                    Weights[i] = Weights[i] + (alpha * delta * Inputs[i]);
+                }
+            }
+            if (computed > desired)
+            {
+                Bias -= (alpha * delta);
+            }
+            else
+            {
+                Bias += (alpha * delta);
+            }
+        }
         void InitializeWeights()
         {
             double low = -0.01;

@@ -39,5 +39,13 @@ namespace CodeTests
             Perceptron perceptron = new Perceptron(4);
             perceptron.ComputeOutput(null);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException), "Training data cannot be null.")]
+        public void ExceptionThrownWhenTrainingDataIsNull()
+        {
+            Perceptron perceptron = new Perceptron(4);
+            perceptron.Train(null, 0.0, 0);
+        }
     }
 }
