@@ -16,11 +16,28 @@ namespace CodeTests
         }
 
         [TestMethod]
-        public void TestThatComputeObjectReturnsAnIntegerOnValidInputs()
+        public void TestThatComputeOutputReturnsAnIntegerOnValidInputs()
         {
             Perceptron perceptron = new Perceptron(4);
             double[] xVals = new double[4];
             Assert.IsInstanceOfType(perceptron.ComputeOutput(xVals), typeof(int));
+            Assert.AreEqual(-1, perceptron.ComputeOutput(xVals));
+        }
+
+        [TestMethod]
+        public void ComputOutputReturnsNegativeOne()
+        {
+            Perceptron perceptron = new Perceptron(4);
+            double[] xVals = new double[4] { -0.1, -0.1, -0.2, -0.2 };
+            Assert.AreEqual(-1, perceptron.ComputeOutput(xVals));
+        }
+
+        [TestMethod]
+        public void ComputeOutputReturnsPositiveOne()
+        {
+            Perceptron perceptron = new Perceptron(4);
+            double[] xVals = new double[4]{1.0, 2.1, 3.2, 4.2};
+            Assert.AreEqual(1, perceptron.ComputeOutput(xVals));
         }
 
         [TestMethod]
@@ -47,5 +64,6 @@ namespace CodeTests
             Perceptron perceptron = new Perceptron(4);
             perceptron.Train(null, 0.0, 0);
         }
+
     }
 }

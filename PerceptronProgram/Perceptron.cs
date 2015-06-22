@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace Perceptrons
 {
@@ -9,126 +8,164 @@ namespace Perceptrons
         double[] Inputs;
         double[] Weights;
         double Bias;
-        int Output;
-        Random rnd;
+        Random RandomNumberGenerator;
 
         public Perceptron(int numInput)
+        {
+            Assign(numInput);
+            Initialize();
+        }
+
+        private void Assign(int numInput)
         {
             NumInput = numInput;
             Inputs = new double[NumInput];
             Weights = new double[NumInput];
-            rnd = new Random(0);
-            InitializeWeights();
         }
-        public int ComputeOutput(double[] xValues)
-        {
-            if (xValues == null)
-                throw new ArgumentNullException("xValues cannot be null.");
-            if (xValues.Length != NumInput)
-                throw new ArgumentException("Bad xValues data provided.");
 
-            for (int i = 0; i < xValues.Length; i++)
-            {
-                Inputs[i] = xValues[i];
-            }
+        private void Initialize()
+        {
+            InitializeRandomNumberGenerator();
+            InitializeWeights();
+            InitializeBias();
+        }
+
+        private void InitializeRandomNumberGenerator()
+        {
+            RandomNumberGenerator = new Random(0);
+        }
+        public int ComputeOutput(double[] input)
+        {
+            SanityCheckForComputeOutput(input);
+            Array.Copy(input, Inputs, input.Length);
+            double sum = ComputeSum();
+            sum += Bias;
+            return Activation(sum);
+        }
+
+        private double ComputeSum()
+        {
             double sum = 0.0;
             for (int i = 0; i < NumInput; i++)
             {
                 sum += Inputs[i] * Weights[i];
             }
-            sum += Bias;
-            int result = Activation(sum);
-            Output = result;
-            return result;
+            return sum;
+        }
+
+        private void SanityCheckForComputeOutput(double[] xValues)
+        {
+            if (xValues == null)
+                throw new ArgumentNullException("xValues cannot be null.");
+            if (xValues.Length != NumInput)
+                throw new ArgumentException("Bad xValues data provided.");
         }
 
         public double[] Train(double[][] trainingData, double alpha, int maxEpochs)
         {
-            if (trainingData == null)
-            {
-                throw new ArgumentNullException("trainingData", "Training data cannot be null.");
-            }
+            SanityCheckForTrain(trainingData);
             double[] xValues = new double[NumInput];
-            int desired = 0;
+            int[] sequence = InitializeSequence(trainingData);
+            for (int epoch = 0; epoch < maxEpochs; epoch++)
+            {
+                TrainOnCurrentEpoch(trainingData, alpha, xValues, sequence);
+            }
+            return SetupResult();
+        }
+
+        private void TrainOnCurrentEpoch(double[][] trainingData, double alpha, double[] xValues, int[] sequence)
+        {
+            Shuffle(sequence);
+            for (int i = 0; i < trainingData.Length; i++)
+            {
+                TrainOnCurrentSequence(trainingData, alpha, xValues, sequence, i);
+            }
+        }
+
+        private static int[] InitializeSequence(double[][] trainingData)
+        {
             int[] sequence = new int[trainingData.Length];
-            for(int i = 0; i < sequence.Length; i++)
+            for (int i = 0; i < sequence.Length; i++)
             {
                 sequence[i] = i;
             }
-            for (int epoch = 0; epoch < maxEpochs; epoch++ )
+            return sequence;
+        }
+
+        private void TrainOnCurrentSequence(double[][] trainingData, double alpha, double[] xValues, int[] sequence, int i)
+        {
+            int current = sequence[i];
+            Array.Copy(trainingData[current], xValues, NumInput);
+            int desired = int.Parse(trainingData[current][NumInput].ToString());
+            int computed = ComputeOutput(xValues);
+            int delta = computed - desired;
+            if (delta != 0)
             {
-                Shuffle(sequence);
-                for (int i = 0; i < trainingData.Length; i++)
-                {
-                    int idx = sequence[i];
-                    Array.Copy(trainingData[idx], xValues, NumInput);
-                    desired = int.Parse(trainingData[idx][NumInput].ToString());
-                    int computed = ComputeOutput(xValues);
-                    Update(computed, desired, alpha);
-                }
+                Update(delta, alpha);
             }
+        }
+
+        private double[] SetupResult()
+        {
             double[] result = new double[NumInput + 1];
             Array.Copy(Weights, result, NumInput);
             result[result.Length - 1] = Bias;
             return result;
         }
+
+        private static void SanityCheckForTrain(double[][] trainingData)
+        {
+            if (trainingData == null)
+            {
+                throw new ArgumentNullException("trainingData", "Training data cannot be null.");
+            }
+        }
         void Shuffle(int[] sequence)
         {
             for (int i = 0; i < sequence.Length; i++)
             {
-                int r = rnd.Next(i, sequence.Length);
+                int r = RandomNumberGenerator.Next(i, sequence.Length);
                 int tmp = sequence[r];
                 sequence[r] = sequence[i];
                 sequence[i] = tmp;
             }
         }
-        void Update(int computed, int desired, double alpha) {
-            if (computed == desired) return;
-            int delta = computed - desired;
+        void Update(int delta, double alpha)
+        {
             for (int i = 0; i < Weights.Length; i++)
             {
-                if (computed > desired && Inputs[i] >= 0.0)
-                {
-                    Weights[i] = Weights[i] - (alpha * delta * Inputs[i]);
-                }
-                else if (computed > desired && Inputs[i] >= 0.0)
-                {
-                    Weights[i] = Weights[i] + (alpha * delta * Inputs[i]);
-                }
-                else if (computed < desired && Inputs[i] >= 0.0)
-                {
-                    Weights[i] = Weights[i] - (alpha * delta * Inputs[i]);
-                }
-                else if (computed < desired && Inputs[i] < 0.0)
-                {
-                    Weights[i] = Weights[i] + (alpha * delta * Inputs[i]);
-                }
+                UpdateCurrentWeight(delta, alpha, i);
             }
-            if (computed > desired)
+            UpdateBias(delta, alpha);
+        }
+
+        private void UpdateBias(int delta, double alpha)
+        {
+            if (delta > 0)
+                delta *= -1;
+
+            Bias += (alpha * delta);
+        }
+
+        private void UpdateCurrentWeight(int delta, double alpha, int i)
+        {
+            double currentInput = Inputs[i] >= 0.0 ? Inputs[i]*-1 : Inputs[i];
+            Weights[i] = Weights[i] + (alpha * delta * currentInput);
+        }
+        void InitializeWeights(double low = -0.01, double high = 0.01)
+        {
+            for (int i = 0; i < Weights.Length; i++)
             {
-                Bias -= (alpha * delta);
-            }
-            else
-            {
-                Bias += (alpha * delta);
+                Weights[i] = (high - low) * RandomNumberGenerator.NextDouble() + low;
             }
         }
-        void InitializeWeights()
+        void InitializeBias(double low = -0.01, double high = 0.01)
         {
-            double low = -0.01;
-            double high = 0.01;
-            for (int i = 0; i < Weights.Length; i++)
-            {
-                Weights[i] = (high - low) * rnd.NextDouble() + low;
-            }
-            Bias = (high - low) * rnd.NextDouble() + low;
+            Bias = (high - low) * RandomNumberGenerator.NextDouble() + low;
         }
         static int Activation(double v)
         {
-            if (v > 0.0)
-                return +1;
-            else
-                return -1;
+            return v > 0.0 ? 1 : -1;
         }
     }
 }
